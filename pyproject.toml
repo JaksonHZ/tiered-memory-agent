@@ -1,0 +1,33 @@
+[project]
+name = "tiered-memory-agent"
+version = "0.1.0"
+description = "MCP server with tiered memory for agents: episodic notes and a semantic tree of food-safety norms"
+authors = [
+    { name = "Jakson Huang Zheng", email = "jaksonhuangz@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=2.3.0",
+]
+
+[project.scripts]
+tiered-memory-agent = "tiered_memory_agent.server:main"
+
+[build-system]
+requires = ["uv_build>=0.13.1,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["scripts"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
