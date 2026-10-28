@@ -5,11 +5,14 @@ import os
 import re
 import unicodedata
 from datetime import date
+from functools import cache
 from itertools import count
 from pathlib import Path
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
+
+from tiered_memory_agent.search import SemanticIndex, format_results
 
 ROOT = Path(os.environ.get("TMA_ROOT", Path(__file__).resolve().parents[2]))
 
@@ -17,10 +20,10 @@ mcp = MCPServer(
     "tiered-memory-agent",
     instructions=(
         "Answers questions about food-safety rules for restaurants (Brazilian sanitary norms). "
-        "Navigate the semantic memory: call read_index('semantic'), descend through the index.md "
-        "of the relevant topic, then read_doc the norm file that answers. Cite the file path and "
-        "the item number. Use remember to store facts from the conversation; episodic notes are "
-        "unreviewed and are never a source for answers."
+        "Find the answer in the semantic memory in one of two ways: navigate it (read_index('semantic'), "
+        "descend through the index.md of the relevant topic, then read_doc the norm file), or search it "
+        "(search, then read_doc for more context). Cite the file path and the item number. Use remember "
+        "to store facts from the conversation; episodic notes are unreviewed and are never a source for answers."
     ),
 )
 
@@ -89,6 +92,19 @@ def read_doc(path: str) -> str:
     if doc.suffix != ".md" or not doc.is_file():
         raise ToolError(f"no markdown file at {path}")
     return doc.read_text(encoding="utf-8")
+
+
+@cache
+def _index(root: Path) -> SemanticIndex:
+    return SemanticIndex(root / "semantic", cache_dir=root / ".cache")
+
+
+@mcp.tool()
+def search(query: str, k: int = 5) -> str:
+    """Semantic search over the norms. Returns the k most similar items, each with the path and item to cite."""
+    if not 1 <= k <= 20:
+        raise ToolError("k must be between 1 and 20")
+    return format_results(_index(ROOT).search(query, k))
 
 
 def main() -> None:

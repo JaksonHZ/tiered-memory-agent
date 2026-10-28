@@ -8,6 +8,9 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "mcp>=2.3.0",
+    "numpy>=2.5.4",
+    "sentence-transformers>=6.2.0",
+    "torch>=2.14.1",
 ]
 
 [project.scripts]
@@ -31,3 +34,12 @@ line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+
+# CPU-only torch: the PyPI default on Linux pulls ~2 GB of CUDA libraries.
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

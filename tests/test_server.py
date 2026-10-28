@@ -67,6 +67,6 @@ def test_tools_over_mcp():
             return tools, ok, refused
 
     tools, ok, refused = asyncio.run(run())
-    assert tools == {"remember", "read_index", "read_doc"}
+    assert tools == {"remember", "read_index", "read_doc", "search"}
     assert not ok.is_error and ok.content[0].text == "# pests"
     assert refused.is_error and "must be inside" in refused.content[0].text
