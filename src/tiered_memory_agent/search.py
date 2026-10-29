@@ -51,6 +51,16 @@ def chunk_tree(semantic: Path) -> list[dict]:
     return chunks
 
 
+def normalize(item: str) -> str:
+    return re.sub(r"[º°.\s]", "", item.lower())
+
+
+def cites(citation: dict, source: dict) -> bool:
+    """Same file, and one item contains the other: "Art. 53" and "Art. 53, III" cite each other."""
+    a, b = normalize(citation["item"]) + ",", normalize(source["item"]) + ","
+    return citation["path"].removeprefix("./") == source["path"] and (a.startswith(b) or b.startswith(a))
+
+
 def e5_encode(texts: list[str]) -> np.ndarray:
     return _model().encode(texts, normalize_embeddings=True, batch_size=32, show_progress_bar=False)
 

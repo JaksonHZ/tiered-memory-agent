@@ -9,9 +9,10 @@ copied verbatim; only the hard line breaks of the source are rejoined into parag
 import html
 import json
 import re
-import shutil
 import subprocess
 from pathlib import Path
+
+from tiered_memory_agent.consolidate import NOTES, notes_entry
 
 ROOT = Path(__file__).resolve().parents[1]
 SEMANTIC = ROOT / "semantic"
@@ -262,8 +263,10 @@ def to_markdown(paras: list[str]) -> str:
 
 
 def build() -> None:
-    # ponytail: the build owns all of semantic/; once consolidation writes there (phase 4), stop the rmtree
-    shutil.rmtree(SEMANTIC, ignore_errors=True)
+    # the notes.md files come from consolidation PRs, not from sources/: everything else is rebuilt
+    for old in SEMANTIC.rglob("*.md"):
+        if old.name != NOTES:
+            old.unlink()
     files: dict[str, list[tuple[str, str]]] = {topic: [] for topic in TOPICS}  # topic -> [(file, description)]
 
     for norm_id, norm in NORMS.items():
@@ -286,6 +289,7 @@ def build() -> None:
         title, covers = TOPICS[topic]
         lines = [f"# {title}", "", f"Trata de {covers}.", "", "## Arquivos", ""]
         lines += [f"- [semantic/{topic}/{name}]({name}): {desc}" for name, desc in entries]
+        lines += [notes_entry(topic)] if (SEMANTIC / topic / NOTES).exists() else []
         (SEMANTIC / topic / "index.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     lines = [

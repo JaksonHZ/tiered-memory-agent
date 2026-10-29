@@ -26,6 +26,29 @@ Em construção.
   `eval/runs/<modelo>-<estratégia>.jsonl` e `eval/score.py` mede acerto (Gemini 3.5 Flash como juiz, com rubrica),
   citação certa, recusa certa, tokens e latência. O juiz é conferido contra uma amostra corrigida à mão
   (`eval/human_labels.jsonl`).
+- Consolidação (`src/tiered_memory_agent/consolidate.py`), a reflexão do Generative Agents: o LLM lê os episódios
+  novos, junta os que repetem a mesma regra e propõe uma orientação para cada regra, com o item da norma que a
+  sustenta. Cada proposta passa por checagens:
+  - **dado pessoal** (CPF, telefone, e-mail): regex, sem LLM;
+  - **fonte**: o item citado existe na norma e a proposta cita algum episódio de origem; sem LLM;
+  - **fidelidade aos episódios, sustentação pelo item, contradição com a base e duplicata**: LLM.
+
+  Só a proposta que passa em todas vira pull request, com o parecer no corpo. O merge é a revisão humana, e
+  `semantic/` só muda assim: a orientação entra em `semantic/<tema>/notes.md`, que a busca e a navegação já leem.
+  Cada proposta, aprovada ou barrada, fica em `proposals/` com o parecer. Uma proposta com dado pessoal guarda só o
+  parecer.
+- `episodic/2026-10-29-*.md`: 12 conversas sintéticas, marcadas como sintéticas, para testar a consolidação:
+  - 6 com fatos certos, em pares que repetem a mesma regra;
+  - 2 com regras que não existem nas normas;
+  - 2 que contradizem a norma;
+  - 2 com um fato certo e um dado pessoal fictício.
+
+  O gabarito está em `eval/consolidation_key.jsonl`, e `eval/consolidation.py` mede:
+  - quantos fatos passaram com a fonte certa;
+  - quantas propostas aprovadas citam o item esperado;
+  - quantas repetições viraram uma proposta só;
+  - quantos erros plantados passaram;
+  - quanto dado pessoal vazou.
 
 ## Resultados (parciais)
 
@@ -90,6 +113,9 @@ ele apenas refaz a tabela. Os testes usam um LLM falso e não precisam da chave.
 uv run --env-file .env python eval/run.py --limit 2  # rodada de teste
 uv run --env-file .env python eval/run.py            # todas as perguntas; rodar de novo continua de onde parou
 uv run --env-file .env python eval/score.py eval/runs/*.jsonl
+uv run --env-file .env python eval/consolidation.py   # mede a consolidação nas conversas sintéticas, sem PR
+uv run --env-file .env python -m tiered_memory_agent.consolidate        # grava as propostas em proposals/
+uv run --env-file .env python -m tiered_memory_agent.consolidate --pr   # e abre um PR para cada aprovada (usa gh)
 ```
 
 O servidor MCP roda por stdio. Para conectar um cliente MCP (Claude Desktop, por exemplo):

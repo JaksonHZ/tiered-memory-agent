@@ -1,6 +1,8 @@
 from types import SimpleNamespace
 
-from score import agreement, cites, grade, summarize
+from score import agreement, grade, summarize
+
+from tiered_memory_agent.search import cites
 
 
 class FakeJudge:

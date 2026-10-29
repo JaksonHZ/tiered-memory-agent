@@ -8,7 +8,6 @@ The judge is measured against eval/human_labels.jsonl, answers graded by hand: {
 
 import argparse
 import json
-import re
 import statistics
 from pathlib import Path
 
@@ -16,6 +15,7 @@ from google.genai import types
 from retrieval import ROOT, load_questions
 
 from tiered_memory_agent.agent import make_client
+from tiered_memory_agent.search import cites
 
 JUDGE_MODEL = "gemini-3.5-flash"
 JUDGE_SYSTEM = (
@@ -35,16 +35,6 @@ VERDICT_SCHEMA = {
     "required": ["reason", "verdict"],
     "additionalProperties": False,
 }
-
-
-def normalize(item: str) -> str:
-    return re.sub(r"[º°.\s]", "", item.lower())
-
-
-def cites(citation: dict, source: dict) -> bool:
-    """Same file, and one item contains the other: "Art. 53" and "Art. 53, III" cite each other."""
-    a, b = normalize(citation["item"]) + ",", normalize(source["item"]) + ","
-    return citation["path"].removeprefix("./") == source["path"] and (a.startswith(b) or b.startswith(a))
 
 
 def grade(record: dict, question: dict, client) -> dict:
