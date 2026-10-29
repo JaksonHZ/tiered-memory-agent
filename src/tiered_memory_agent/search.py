@@ -52,7 +52,7 @@ def chunk_tree(semantic: Path) -> list[dict]:
 
 
 def e5_encode(texts: list[str]) -> np.ndarray:
-    return _model().encode(texts, normalize_embeddings=True, batch_size=32)
+    return _model().encode(texts, normalize_embeddings=True, batch_size=32, show_progress_bar=False)
 
 
 @cache
