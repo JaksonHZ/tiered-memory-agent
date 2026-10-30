@@ -50,14 +50,17 @@ Em construção.
   - quantos erros plantados passaram;
   - quanto dado pessoal vazou.
 
-## Resultados (parciais)
+## Resultados
 
-São 77 perguntas: 67 têm resposta na base e 10 não têm. O agente é o Gemini 3.5 Flash-Lite. A estratégia (b) ainda
-não terminou, porque o plano gratuito do Gemini tem limite diário; ela entra nesta tabela quando acabar.
+### Índice ou embeddings
+
+São 77 perguntas: 67 têm resposta na base e 10 não têm. O agente é o Gemini 3.5 Flash-Lite, com as mesmas tools do
+servidor MCP, uma estratégia por vez.
 
 | estratégia | correta | parcial | citação certa | recusa certa | recusa indevida | tokens (mediana) | latência (mediana) | erros |
 |---|---|---|---|---|---|---|---|---|
 | (a) índice | 88% | 9% | 66% | 90% | 0% | 12.242 | 51 s | 0 |
+| (b) busca | 90% | 9% | 94% | 90% | 0% | 5.686 | 12 s | 0 |
 
 - **Correta e parcial:** nota do juiz sobre o conteúdo, nas 67 perguntas com resposta. Recusar uma delas conta como
   incorreta.
@@ -67,16 +70,43 @@ não terminou, porque o plano gratuito do Gemini tem limite diário; ela entra n
 - **Recusa indevida:** fração das 67 perguntas com resposta em que o agente recusou responder.
 - **Tokens:** entrada mais saída, somados em todos os turnos da pergunta.
 
-O que os erros da estratégia (a) mostram:
+O que a comparação mostra:
 
-- **Duas respostas erradas:**
-  - Em uma, o agente deu o prazo geral de 5 dias para maionese, que pela norma de São Paulo dura 2 dias.
-  - Na outra, falou de como guardar caixas de papelão, sem dizer que elas não podem entrar na cozinha.
-- **Seis parciais.** Duas apresentam uma regra só de São Paulo como se valesse no país todo, e uma diz que as normas
-  não tratam de um assunto que a RDC 216 trata.
-- **Citações abaixo do conteúdo.** O agente acerta o conteúdo bem mais vezes do que a citação. Muitas vezes cita um
-  bloco inteiro, como "Capítulo III, seção III (arts. 49 a 68)", em vez do item exato.
-- **Recusas.** Recusou 9 das 10 perguntas sem resposta na base e nunca recusou uma que tinha resposta.
+- **Conteúdo empatado.** 88% contra 90% fica dentro da margem de erro.
+- **A busca cita muito melhor:** 94% contra 66%. Cada resultado da busca já traz o caminho e o item para citar. Na
+  navegação, o agente lê o arquivo inteiro do tema e muitas vezes cita um bloco, como "Capítulo III, seção III (arts.
+  49 a 68)", em vez do item exato.
+- **A busca custa metade.** A navegação lê `index.md` e arquivos inteiros; a busca lê só os trechos que voltam.
+- **Os erros são diferentes.**
+  - Erradas:
+    - a navegação deu o prazo geral de 5 dias para a maionese, que em São Paulo dura 2 dias;
+    - a navegação não disse que caixa de papelão não pode entrar na cozinha;
+    - a busca disse que produto sem prazo de validade não pode ser usado, quando a RDC 216 manda usar pela ordem de
+      entrada os produtos dispensados de validade.
+  - Parciais: nas duas estratégias, a maioria apresenta uma regra só de São Paulo como se valesse no país todo.
+- **Recusas.** As duas recusaram 9 das 10 perguntas sem resposta e nunca recusaram uma que tinha resposta. A pergunta
+  que falta é a mesma nas duas: "o cardápio precisa informar as calorias?". As duas responderam o mesmo que o
+  gabarito (as normas não exigem), mas marcaram a pergunta como respondida em vez de recusar.
+
+### Consolidação
+
+Medida nas 12 conversas sintéticas com `eval/consolidation.py`, numa rodada do Gemini 3.5 Flash-Lite:
+
+| propostas | aprovadas | fatos aprovados com a fonte certa | aprovadas que citam o item esperado | repetições agrupadas | erros plantados que passaram | dado pessoal que vazou |
+|---|---|---|---|---|---|---|
+| 10 | 5 | 6 de 8 | 4 de 5 | 2 de 3 | 0 de 4 | 0 de 5 |
+
+- **Os erros plantados não passaram.** As duas regras que não existem nas normas pararam na checagem "sustentada pelo
+  item". As duas que contradizem a norma o LLM corrigiu por conta própria ao propor, mesmo instruído a não corrigir;
+  a checagem de fidelidade barrou as duas, porque a nota já não dizia o que o episódio disse.
+- **Nada de dado pessoal vazou.** O LLM não copiou o dado pessoal, então a regex nem chegou a ser testada de verdade
+  nesta rodada; os testes cobrem esse caso.
+- **O ponto fraco é a checagem "sustentada pelo item".** Uma proposta sobre luvas passou citando um inciso sobre a
+  temperatura do óleo. O fato da caixa d'água se perdeu porque o LLM citou um artigo que não fala de prazo.
+- **Os PRs de demonstração deram o mesmo recado.** Uma segunda execução, com `--pr`, abriu 7 PRs
+  ([#1](https://github.com/JaksonHZ/tiered-memory-agent/pull/1) a
+  [#7](https://github.com/JaksonHZ/tiered-memory-agent/pull/7)). Na revisão, 3 deles citam um item que não sustenta a
+  nota, e um repete outro PR da mesma execução. É para isso que serve a revisão humana: o merge é o último filtro.
 
 Limitações:
 
@@ -86,10 +116,14 @@ Limitações:
   plano gratuito. Nas 18 respostas que ele chegou a julgar, deu a mesma nota que o Claude em todas. Cada nota fica no
   arquivo da rodada com o motivo e o campo `judge`. A amostra corrigida à mão ainda falta.
 - **Margem de erro.** Foi uma rodada por estratégia, sem repetição. Com 67 perguntas, a margem fica em torno de 8
-  pontos percentuais para cima ou para baixo.
-- **Latência.** Ela inclui as esperas impostas pelo limite de requisições do plano gratuito. Serve para comparar as
-  estratégias na mesma conta, não como tempo de resposta real.
-- **Gabarito.** O gabarito (`eval/questions.jsonl`) ainda está em revisão.
+  pontos percentuais para cima ou para baixo. A consolidação usou 12 conversas, e uma nova execução do LLM dá
+  propostas diferentes.
+- **Latência.** Ela inclui as esperas impostas pelo limite de requisições do plano gratuito, e as duas estratégias
+  rodaram em dias diferentes. Indica a ordem de grandeza, não o tempo de resposta real.
+- **Duplicatas e conflitos na consolidação.** A checagem de duplicata compara só com orientações que já entraram na
+  base, não com outras propostas da mesma execução. E os PRs do mesmo tema mexem no mesmo `notes.md`, então, depois
+  do merge de um, os outros precisam de rebase.
+- **Gabarito.** O gabarito (`eval/questions.jsonl`) e as conversas sintéticas ainda estão em revisão.
 
 ## Como rodar
 
