@@ -16,3 +16,9 @@ Fonte: semantic/food-preparation/rdc-216-2004.md, item 4.8.19. Episódios: 2026-
 O óleo da fritadeira não deve ser aquecido a temperaturas superiores a 180 graus Celsius.
 
 Fonte: semantic/food-preparation/rdc-216-2004.md, item 4.8.11. Episódios: 2026-10-29-oleo-da-fritadeira-ate-180-graus.
+
+## Substituição do óleo de fritura com alteração sensorial
+
+O óleo deve ser substituído imediatamente quando houver alteração evidente de características sensoriais ou formação intensa de espuma e fumaça.
+
+Fonte: semantic/food-preparation/cvs-3-2026.md, item Art. 61, II. Episódios: 2026-10-29-troca-do-oleo-com-espuma-e-fumaca.
