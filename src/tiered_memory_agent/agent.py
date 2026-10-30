@@ -75,9 +75,17 @@ def declarations(names: tuple[str, ...]) -> list[types.FunctionDeclaration]:
 def answer(question: str, strategy: str, client, model: str = MODEL, max_turns: int = 12) -> dict:
     """Run the agent on one question: its answer, citations, whether it answered, token usage and tool calls."""
     allowed = STRATEGIES[strategy]
+    tools = {name: TOOLS[name] for name in allowed}
+    return run(question, SYSTEM + HOW[strategy], declarations(allowed), tools, client, model, max_turns)
+
+
+def run(
+    question: str, system: str, offered: list, tools: dict, client, model: str = MODEL, max_turns: int = 12
+) -> dict:
+    """The function-calling loop: offered are the tool declarations, tools maps each name to the function it runs."""
     config = types.GenerateContentConfig(
-        system_instruction=SYSTEM + HOW[strategy],
-        tools=[types.Tool(function_declarations=[*declarations(allowed), ANSWER])],
+        system_instruction=system,
+        tools=[types.Tool(function_declarations=[*offered, ANSWER])],
         tool_config=types.ToolConfig(function_calling_config=types.FunctionCallingConfig(mode="ANY")),
     )
     contents = [types.Content(role="user", parts=[types.Part(text=question)])]
@@ -99,9 +107,9 @@ def answer(question: str, strategy: str, client, model: str = MODEL, max_turns: 
         for call in calls:
             result["tool_calls"].append({"name": call.name, "input": call.args})
             try:
-                if call.name not in allowed:
+                if call.name not in tools:
                     raise ToolError(f"unknown tool: {call.name}")
-                output = {"result": TOOLS[call.name](**(call.args or {}))}
+                output = {"result": tools[call.name](**(call.args or {}))}
             except (ToolError, TypeError) as e:
                 output = {"error": str(e)}
             parts.append(types.Part.from_function_response(name=call.name, response=output))

@@ -73,9 +73,10 @@ def _model():
 
 
 class SemanticIndex:
-    def __init__(self, semantic: Path, encode: Encoder = e5_encode, cache_dir: Path | None = None):
+    def __init__(self, corpus: Path | list[dict], encode: Encoder = e5_encode, cache_dir: Path | None = None):
+        """corpus: the semantic/ folder, or chunks already made."""
         self.encode = encode
-        self.chunks = chunk_tree(semantic)
+        self.chunks = chunk_tree(corpus) if isinstance(corpus, Path) else corpus
         # e5 expects "passage: " and "query: " prefixes
         passages = [f"passage: {c['title']}\n{c['context']}\n{c['text']}" for c in self.chunks]
         key = hashlib.sha256("\0".join([MODEL, *passages]).encode()).hexdigest()[:16]

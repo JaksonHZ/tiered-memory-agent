@@ -1,0 +1,9 @@
+{"id": "q001", "kind": "contradiction"}
+{"id": "q006", "kind": "fact"}
+{"id": "q018", "kind": "contradiction"}
+{"id": "q038", "kind": "fact"}
+{"id": "q043", "kind": "fact"}
+{"id": "q044", "kind": "fact"}
+{"id": "q071", "kind": "unsupported"}
+{"id": "m01", "kind": "fact", "question": "Como tenho que lavar a alface que vai ser servida crua na salada?", "answer": "Pela RDC 216, os alimentos consumidos crus devem passar por higienização para reduzir a contaminação superficial, com produtos regularizados no Ministério da Saúde e aplicados de forma a não deixar resíduos. Em São Paulo, a CVS 3 detalha: remover as partes deterioradas e as sujidades sob água corrente potável, desinfetar por imersão em solução desinfetante regularizada pela Anvisa para uso em alimentos, conforme as instruções do fabricante, e enxaguar com água potável.", "sources": [{"path": "semantic/food-preparation/rdc-216-2004.md", "item": "4.8.19"}, {"path": "semantic/food-preparation/cvs-3-2026.md", "item": "Art. 57"}], "answerable": true, "origin": "llm", "reviewed": false}
+{"id": "m02", "kind": "unsupported", "question": "A vigilância sanitária exige quantos extintores de incêndio na cozinha?", "answer": "As normas da base (RDC 216/2004, RDC 275/2002 e Portarias CVS 3/2026 e 9/2026) não tratam disso: não falam de extintor de incêndio. O agente deve dizer que a base não responde.", "sources": [], "answerable": false, "origin": "llm", "reviewed": false}
